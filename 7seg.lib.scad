@@ -38,89 +38,41 @@ translate([+80,0,0]) color("blue")
 
 
 
-module digit_outline(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6]) {
+module digit_outline(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6],nice=1) {
     for(segment=segments) {
-        segment_outline(width,height,thickness,spacing,depth,skew,edge,segment);
+        segment_outline(width,height,thickness,spacing,depth,skew,edge,segment,nice);
     }
 }
 
-module digit_inner(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6]) {
+module digit_inner(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6],nice=1) {
     for(segment=segments) {
-        segment_inner(width,height,thickness,spacing,depth,skew,edge,segment);
-    }
-}
-
-
-module digit_hull(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6]) {
-    for(segment=segments) {
-        segment_hull(width,height,thickness,spacing,depth,skew,edge,segment);
+        segment_inner(width,height,thickness,spacing,depth,skew,edge,segment,nice);
     }
 }
 
 
+module digit_hull(width,height,thickness,spacing,depth=10,skew=0,edge=1,segments=[0:6],nice=1) {
+    for(segment=segments) {
+        segment_hull(width,height,thickness,spacing,depth,skew,edge,segment,nice);
+    }
+}
 
-module segment_inner(width,height,thickness,spacing,depth,skew,edge,segment) {
+
+
+module segment_inner(width,height,thickness,spacing,depth,skew,edge,segment,nice) {
     __add_depth(depth) difference() {
-        hull() segment_outline(width,height,thickness,spacing,0,skew,edge,segment);
-        segment_outline(width,height,thickness,spacing,0,skew,edge,segment);
+        hull() segment_outline(width,height,thickness,spacing,0,skew,edge,segment,nice);
+        segment_outline(width,height,thickness,spacing,0,skew,edge,segment,nice);
     }
 }
 
 
-module segment_hull(width,height,thickness,spacing,depth,skew,edge,segment) {
-    __add_depth(depth) hull() segment_outline(width,height,thickness,spacing,0,skew,edge,segment);
+module segment_hull(width,height,thickness,spacing,depth,skew,edge,segment,nice) {
+    __add_depth(depth) hull() segment_outline(width,height,thickness,spacing,0,skew,edge,segment,nice);
 }
 
 
-module segment_outline(width,height,thickness,spacing,depth,skew,edge,segment) {
-    
-    sx = width/2 + spacing/2;
-    sy = height/2 + spacing/2;
-    ss = thickness+spacing;
-    st = ss*edge;
-    
-    bp = [
-        [sx-ss/2, 0], // 13 - 0
-        [sx-ss, ss/2], // 10 - 1
-        [sx, ss/2], // 11 - 2
-        [sx-ss, sy-ss], // 6 - 3
-        [sx, sy-st], // 7 - 4
-        [sx-st,sy], // 1 - 5
-        [sx-st/2,sy-st/2] // 3 - 6
-    ];
-
-    p = [
-        [-bp[5][0], bp[5][1]], // 0
-        [ bp[5][0], bp[5][1]],
-        [-bp[6][0], bp[6][1]],
-        [ bp[6][0], bp[6][1]],
-        [-bp[4][0], bp[4][1]],
-        [-bp[3][0], bp[3][1]],
-        [ bp[3][0], bp[3][1]],
-        [ bp[4][0], bp[4][1]],
-        [-bp[2][0], bp[2][1]],
-        [-bp[1][0], bp[1][1]],
-        [ bp[1][0], bp[1][1]],
-        [ bp[2][0], bp[2][1]],
-        [-bp[0][0], bp[0][1]], // 12
-        [ bp[0][0], bp[0][1]],
-        [-bp[2][0],-bp[2][1]],
-        [-bp[1][0],-bp[1][1]],
-        [ bp[1][0],-bp[1][1]],
-        [ bp[2][0],-bp[2][1]],
-        [-bp[4][0],-bp[4][1]],
-        [-bp[3][0],-bp[3][1]],
-        [ bp[3][0],-bp[3][1]],
-        [ bp[4][0],-bp[4][1]],
-        [-bp[6][0],-bp[6][1]],
-        [ bp[6][0],-bp[6][1]],
-        [-bp[5][0],-bp[5][1]],
-        [ bp[5][0],-bp[5][1]],
-    ] * [
-    [1,0],
-    [tan(skew),1]
-    ];
-
+module segment_outline(width,height,thickness,spacing,depth,skew,edge,segment,nice) {
     n = [
         [0,1],[1,3],[3,6],[6,5],[5,2],[2,0],
         [3,7],[7,11],[11,13],[13,10],[10,6],[6,3],
@@ -131,10 +83,59 @@ module segment_outline(width,height,thickness,spacing,depth,skew,edge,segment) {
         [19,20],[20,23],[23,25],[25,24],[24,22],[22,19],
     ];
     __add_depth(depth) for(i=[0:5]) hull() {
-        translate(p[n[segment*6+i][0]]) circle(r=spacing/2,$fn=24);
-        translate(p[n[segment*6+i][1]]) circle(r=spacing/2,$fn=24);
+        translate(segment_point(width,height,thickness,spacing,skew,edge,n[segment*6+i][0],nice)) circle(r=spacing/2,$fn=24);
+        translate(segment_point(width,height,thickness,spacing,skew,edge,n[segment*6+i][1],nice)) circle(r=spacing/2,$fn=24);
     }
 }
+
+function segment_point(width,height,thickness,spacing,skew,edge,i,nice) =
+    let(sx = width/2 + spacing/2,
+    sy = height/2 + spacing/2,
+    ss = thickness+spacing,
+    st = ss*edge,
+    
+    bp = [
+        [sx-ss/2, 0], // 13 - 0
+        [sx-ss, ss/2], // 10 - 1
+        [sx, ss/2], // 11 - 2
+        [sx-ss, sy-ss], // 6 - 3
+        [sx, sy-st], // 7 - 4
+        [sx-st,sy], // 1 - 5
+        [sx-st/2,sy-st/2] // 3 - 6
+    ],
+
+    p = [
+        [-bp[5][0]-nice*thickness/3, bp[5][1]], // top top left
+        [ bp[5][0]+nice*thickness/3, bp[5][1]], // top top right
+        [-bp[6][0]-nice*thickness/6, bp[6][1]+nice*thickness/6], // top left outer contact
+        [ bp[6][0]+nice*thickness/6, bp[6][1]+nice*thickness/6], // top right outer contact
+        [-bp[4][0], bp[4][1]+nice*thickness/3], // top left left
+        [-bp[3][0], bp[3][1]], // top left inner contact
+        [ bp[3][0], bp[3][1]], // top right inner contact
+        [ bp[4][0], bp[4][1]+nice*thickness/3], // top right right
+        [-bp[2][0], bp[2][1]], // center left upper outer
+        [-bp[1][0], bp[1][1]], // center left upper inner
+        [ bp[1][0], bp[1][1]], // center right upper inner
+        [ bp[2][0], bp[2][1]], // center right upper outer
+        [-bp[0][0], bp[0][1]], // 12 -thickness/6 center left contact
+        [ bp[0][0], bp[0][1]], // +thickness/6 center right contact
+        [-bp[2][0],-bp[2][1]], // center left lower outer
+        [-bp[1][0],-bp[1][1]], // center left lower inner
+        [ bp[1][0],-bp[1][1]], // center right lower inner
+        [ bp[2][0],-bp[2][1]], // center right lower outer
+        [-bp[4][0],-bp[4][1]-nice*thickness/3], // bottom left left
+        [-bp[3][0],-bp[3][1]], // bottom left inner contact
+        [ bp[3][0],-bp[3][1]], // bottom right inner contact
+        [ bp[4][0],-bp[4][1]-nice*thickness/3], // bottom right right
+        [-bp[6][0]-nice*thickness/6,-bp[6][1]-nice*thickness/6], // bottom left outer contact
+        [ bp[6][0]+nice*thickness/6,-bp[6][1]-nice*thickness/6], // bottom right outer contact
+        [-bp[5][0]-nice*thickness/3,-bp[5][1]], // bottom bottom left
+        [ bp[5][0]+nice*thickness/3,-bp[5][1]], // bottom bottom right
+    ] * [
+    [1,0],
+    [tan(skew),1]
+    ])
+      p[i];
 
 module __add_depth(depth) {
     if(depth > 0) {
